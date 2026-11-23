@@ -7,9 +7,12 @@
 // output.
 //
 // Usage: node main.ts
-// Output: $MAKEFUN_OUTPUT_DIR/meme.png, or out/meme.png when unset.
+// Output: $MAKEFUN_OUTPUT_DIR/meme.png and a copy of POST.json there,
+// or out/meme.png + out/POST.json when MAKEFUN_OUTPUT_DIR is unset.
+// POST.json is copied from $MAKEFUN_BOT_DIR (the repository, /bot in the
+// sandbox) so the sealed scorer finds the X post link in /output.
 
-import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 
 // ---------------------------------------------------------------------------
@@ -791,6 +794,14 @@ function main(): void {
   writeFileSync(outPath, png);
   chmodSync(outPath, 0o644);
   console.log(`wrote ${outPath} (${png.length} bytes, ${W}x${H}) in ${Date.now() - t0}ms`);
+  // The sealed scorer checks POST.json in /output, so copy the repository's
+  // POST.json (the X post link) there beside the meme.
+  const botDir = process.env.MAKEFUN_BOT_DIR || "/bot";
+  const postSrc = `${botDir}/POST.json`;
+  const postDst = `${outDir}/POST.json`;
+  copyFileSync(postSrc, postDst);
+  chmodSync(postDst, 0o644);
+  console.log(`copied ${postSrc} -> ${postDst}`);
 }
 
 main();
